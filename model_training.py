@@ -60,7 +60,18 @@ if __name__ == "__main__":
     print("\nTraining Random Forest Regressor with Regularization...")
     rf_model = train_random_forest(X_train, y_train)
     joblib.dump(rf_model, "random_forest_model.pkl")  # Save model
+    joblib.dump(mlp_model, "mlp_model.pkl")  # Save MLP model
+
     
     print("\nChecking for Overfitting...")
     evaluate_model(rf_model, X_train, y_train, "Training")
     evaluate_model(rf_model, X_test, y_test, "Test")
+    mlp_mae, mlp_rmse, mlp_r2 = evaluate_model(mlp_model, X_test, y_test)
+    rf_mae, rf_rmse, rf_r2 = evaluate_model(rf_model, X_test, y_test)
+
+    print("\nSummary of Model Performance:")
+    print(f"{'Model':<25}{'MAE':<10}{'RMSE':<10}{'R² Score':<10}")
+    print(f"{'MLP Regressor (Test)':<25}{mlp_mae:.4f} {mlp_rmse:.4f} {mlp_r2:.4f}")
+    print(f"{'Random Forest (Test)':<25}{rf_mae:.4f} {rf_rmse:.4f} {rf_r2:.4f}")
+
+

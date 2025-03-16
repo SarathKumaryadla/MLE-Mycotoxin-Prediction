@@ -4,6 +4,7 @@ import shap
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+import os
 
 def handle_missing_values(df):
     """Handles missing values by imputing or removing them."""
@@ -41,9 +42,9 @@ def compute_spectral_indices(df):
 def scale_features(df, method='standard'):
     """Scales features using Standardization or Min-Max Scaling."""
     scaler = StandardScaler() if method == 'standard' else MinMaxScaler()
-    df_scaled = df.copy()
-    df_scaled.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
-    return df_scaled
+    feature_columns = [col for col in df.columns if col != 'vomitoxin_ppb']
+    df[feature_columns] = scaler.fit_transform(df[feature_columns])
+    return df
 
 def shap_feature_selection(df, num_features=50):
     """Selects top features using SHAP values from a Random Forest model."""
@@ -60,16 +61,15 @@ def shap_feature_selection(df, num_features=50):
     top_features = np.argsort(shap_importance)[-num_features:]
     selected_columns = X.columns[top_features]
     df_selected = df[selected_columns]
-    df_selected['vomitoxin_ppb'] = y  # Add target variable back
+    df_selected.loc[:, 'vomitoxin_ppb'] = y.values  # Ensures a proper copy is made # Add target variable back
     
     print(f"Feature selection using SHAP reduced from {df.shape[1]-1} to {len(selected_columns)} features.")
     return df_selected
 
 def transform_target(df):
     """Applies log transformation to the target variable."""
-    df_transformed = df.copy()
-    df_transformed['vomitoxin_ppb'] = np.log1p(df['vomitoxin_ppb'])
-    return df_transformed
+    df['vomitoxin_ppb'] = np.log1p(df['vomitoxin_ppb'])
+    return df
 
 def split_data(df, test_size=0.2, random_state=42):
     """Splits the dataset into training and testing sets."""
@@ -85,8 +85,11 @@ if __name__ == "__main__":
     df = remove_outliers(df, method='iqr')
     df = compute_spectral_indices(df)
     df = scale_features(df, method='standard')
+    
+    # Apply SHAP feature selection before splitting to avoid data leakage
     df = shap_feature_selection(df, num_features=50)
-    df = transform_target(df)
+    
+    # Split after SHAP selection
     X_train, X_test, y_train, y_test = split_data(df)
     
     # Save processed data
@@ -94,6 +97,8 @@ if __name__ == "__main__":
     X_test.to_csv("X_test.csv", index=False)
     y_train.to_csv("y_train.csv", index=False)
     y_test.to_csv("y_test.csv", index=False)
+    df.to_csv("processed.csv", index=False)
     
     print("Preprocessing complete! SHAP-based feature selection applied and data saved.")
+
     
