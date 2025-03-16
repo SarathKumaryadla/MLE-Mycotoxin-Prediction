@@ -1,77 +1,94 @@
 import numpy as np
 import pandas as pd
 import joblib
+import os
+import logging
 from sklearn.neural_network import MLPRegressor
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# Setup Logging
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(LOG_DIR, "model_training.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+logging.info("🔄 Starting Model Training...")
+
+# Set paths
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(CURRENT_DIR, "data/processed")
+MODEL_DIR = os.path.join(CURRENT_DIR, "models")
+
+# Ensure model directory exists
+os.makedirs(MODEL_DIR, exist_ok=True)
 
 def train_baseline_model(X_train, y_train):
     """Trains an optimized MLP Regressor with hyperparameter tuning."""
-    model = MLPRegressor(
-        hidden_layer_sizes=(128, 64, 32),  # Increased layer complexity
-        activation='relu',
-        solver='adam',
-        alpha=0.001,  # Regularization to reduce overfitting
-        learning_rate='adaptive',
-        max_iter=1000,
-        random_state=42
-    )
-    model.fit(X_train, y_train)
-    return model
+    try:
+        model = MLPRegressor(
+            hidden_layer_sizes=(128, 64, 32),
+            activation='relu',
+            solver='adam',
+            alpha=0.001,
+            learning_rate='adaptive',
+            max_iter=1000,
+            random_state=42
+        )
+        model.fit(X_train, y_train)
+        logging.info("✅ MLP Regressor trained successfully.")
+        return model
+    except Exception as e:
+        logging.error(f"❌ Error in training MLP Regressor: {str(e)}")
+        raise
 
 def train_random_forest(X_train, y_train, n_estimators=100, max_depth=10, min_samples_split=5, min_samples_leaf=3):
     """Trains a Random Forest Regressor with regularization to prevent overfitting."""
-    model = RandomForestRegressor(
-        n_estimators=n_estimators, 
-        max_depth=max_depth, 
-        min_samples_split=min_samples_split, 
-        min_samples_leaf=min_samples_leaf, 
-        random_state=42
-    )
-    model.fit(X_train, y_train)
-    return model
-
-def evaluate_model(model, X, y, dataset_type="Test"):
-    """Evaluates the model using MAE, RMSE, and R² Score."""
-    y_pred = model.predict(X)
-    mae = mean_absolute_error(y, y_pred)
-    rmse = np.sqrt(mean_squared_error(y, y_pred))
-    r2 = r2_score(y, y_pred)
-    
-    print(f"\n{dataset_type} Set Performance:")
-    print(f"MAE: {mae:.4f}")
-    print(f"RMSE: {rmse:.4f}")
-    print(f"R² Score: {r2:.4f}")
-    return mae, rmse, r2
+    try:
+        model = RandomForestRegressor(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            random_state=42
+        )
+        model.fit(X_train, y_train)
+        logging.info("✅ Random Forest Regressor trained successfully.")
+        return model
+    except Exception as e:
+        logging.error(f"❌ Error in training Random Forest Regressor: {str(e)}")
+        raise
 
 if __name__ == "__main__":
-    # Load preprocessed data
-    X_train = pd.read_csv("X_train.csv")
-    X_test = pd.read_csv("X_test.csv")
-    y_train = pd.read_csv("y_train.csv").values.ravel()
-    y_test = pd.read_csv("y_test.csv").values.ravel()
-    
-    print("Preprocessed data loaded. Training the models...")
-    
-    print("Training Optimized Neural Network (MLP Regressor)...")
-    mlp_model = train_baseline_model(X_train, y_train)
-    evaluate_model(mlp_model, X_test, y_test, "Test")
-    
-    print("\nTraining Random Forest Regressor with Regularization...")
-    rf_model = train_random_forest(X_train, y_train)
-    joblib.dump(rf_model, "random_forest_model.pkl")  # Save model
-    joblib.dump(mlp_model, "mlp_model.pkl")  # Save MLP model
+    try:
+        # Load preprocessed data
+        X_train_path = os.path.join(DATA_DIR, "X_train.csv")
+        y_train_path = os.path.join(DATA_DIR, "y_train.csv")
 
-    
-    print("\nChecking for Overfitting...")
-    evaluate_model(rf_model, X_train, y_train, "Training")
-    evaluate_model(rf_model, X_test, y_test, "Test")
-    mlp_mae, mlp_rmse, mlp_r2 = evaluate_model(mlp_model, X_test, y_test)
-    rf_mae, rf_rmse, rf_r2 = evaluate_model(rf_model, X_test, y_test)
+        if not os.path.exists(X_train_path) or not os.path.exists(y_train_path):
+            logging.error(f"❌ Preprocessed data files missing in {DATA_DIR}")
+            raise FileNotFoundError(f"❌ Preprocessed data files missing in {DATA_DIR}")
 
-    print("\nSummary of Model Performance:")
-    print(f"{'Model':<25}{'MAE':<10}{'RMSE':<10}{'R² Score':<10}")
-    print(f"{'MLP Regressor (Test)':<25}{mlp_mae:.4f} {mlp_rmse:.4f} {mlp_r2:.4f}")
-    print(f"{'Random Forest (Test)':<25}{rf_mae:.4f} {rf_rmse:.4f} {rf_r2:.4f}")
+        X_train = pd.read_csv(X_train_path)
+        y_train = pd.read_csv(y_train_path).values.ravel()
+        logging.info(f"✅ Preprocessed data loaded: {X_train.shape[0]} rows, {X_train.shape[1]} features.")
 
+        print("Training Optimized Neural Network (MLP Regressor)...")
+        mlp_model = train_baseline_model(X_train, y_train)
+
+        print("\nTraining Random Forest Regressor with Regularization...")
+        rf_model = train_random_forest(X_train, y_train)
+
+        # Save models
+        joblib.dump(rf_model, os.path.join(MODEL_DIR, "random_forest_model.pkl"))
+        joblib.dump(mlp_model, os.path.join(MODEL_DIR, "mlp_model.pkl"))
+
+        logging.info(f"✅ Models trained and saved in {MODEL_DIR}")
+        print(f"\n✅ Models trained and saved in {MODEL_DIR}")
+
+    except Exception as e:
+        logging.error(f"❌ Error in model training pipeline: {str(e)}")
+        print(f"❌ ERROR: {e}")
 

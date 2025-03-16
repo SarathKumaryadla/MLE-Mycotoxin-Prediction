@@ -1,0 +1,19 @@
+2025-03-16 21:30:46,050 - INFO - \U0001f504 Starting Preprocessing Pipeline...
+2025-03-16 21:30:46,050 - ERROR - \u274c Error in preprocessing: [Errno 2] No such file or directory: 'c:\\Users\\ykumar\\Learnbay\\IMAGOAI\\data/MLE-Assignment.csv'
+2025-03-16 21:30:46,050 - INFO - \U0001f3af Preprocessing Pipeline Completed.
+2025-03-16 21:34:02,835 - INFO - \U0001f504 Starting Preprocessing Pipeline...
+2025-03-16 21:34:02,835 - ERROR - \u274c Error in preprocessing: [Errno 2] No such file or directory: 'c:\\Users\\ykumar\\Learnbay\\IMAGOAI\\data/MLE-Assignment.csv'
+2025-03-16 21:34:02,852 - INFO - \U0001f3af Preprocessing Pipeline Completed.
+2025-03-16 21:35:53,633 - INFO - \U0001f504 Starting Preprocessing Pipeline...
+2025-03-16 21:35:53,681 - INFO - \u2705 Loaded dataset: 500 rows, 450 columns.
+2025-03-16 21:35:53,682 - INFO - \U0001f50d After removing missing values: 500 rows.
+2025-03-16 21:35:53,683 - ERROR - \u274c Error in preprocessing: unsupported operand type(s) for -: 'str' and 'str'
+2025-03-16 21:35:53,683 - INFO - \U0001f3af Preprocessing Pipeline Completed.
+2025-03-16 21:38:41,655 - INFO - \U0001f504 Starting Preprocessing Pipeline...
+2025-03-16 21:38:41,670 - ERROR - \u274c Error in preprocessing: \u274c Data file not found: c:\Users\ykumar\Learnbay\IMAGOAI\data\MLE-Assignment.csv
+2025-03-16 21:38:41,670 - INFO - \U0001f3af Preprocessing Pipeline Completed.
+2025-03-16 21:45:06,818 - INFO - \U0001f504 Starting Preprocessing Pipeline...
+2025-03-16 21:45:06,850 - INFO - \u2705 Loaded dataset: 500 rows, 450 columns.
+2025-03-16 21:45:06,850 - INFO - \U0001f50d After removing missing values: 500 rows.
+2025-03-16 21:45:06,850 - ERROR - \u274c Error in preprocessing: unsupported operand type(s) for -: 'str' and 'str'
+2025-03-16 21:45:06,850 - INFO - \U0001f3af Preprocessing Pipeline Completed.
