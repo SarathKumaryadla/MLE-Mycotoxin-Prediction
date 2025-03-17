@@ -1,0 +1,6 @@
+2025-03-17 08:25:57,446 - INFO - \U0001f504 Starting Model Training...
+2025-03-17 08:25:57,446 - INFO - \u2705 Preprocessed data loaded: 371 rows, 49 features.
+2025-03-17 08:25:57,784 - INFO - \u2705 MLP Regressor trained successfully.
+2025-03-17 08:25:58,421 - INFO - \u2705 Random Forest Regressor trained successfully.
+2025-03-17 08:25:58,454 - INFO - \u2705 Models trained and saved in c:\Users\ykumar\Learnbay\IMAGOAI\models
+2025-03-17 08:25:58,454 - INFO - \u2705 Selected feature names saved to c:\Users\ykumar\Learnbay\IMAGOAI\models\selected_features.txt

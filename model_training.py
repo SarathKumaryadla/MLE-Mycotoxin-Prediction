@@ -92,3 +92,12 @@ if __name__ == "__main__":
         logging.error(f"❌ Error in model training pipeline: {str(e)}")
         print(f"❌ ERROR: {e}")
 
+# Save selected feature names to a file
+FEATURES_PATH = os.path.join(MODEL_DIR, "selected_features.txt")
+with open(FEATURES_PATH, "w") as f:
+    for feature in X_train.columns:
+        f.write(f"{feature}\n")
+
+logging.info(f"✅ Selected feature names saved to {FEATURES_PATH}")
+
+

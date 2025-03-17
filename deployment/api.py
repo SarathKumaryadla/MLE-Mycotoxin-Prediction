@@ -1,42 +1,63 @@
+import sys
 import os
 import joblib
-import numpy as np
 import pandas as pd
+import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-# Initialize FastAPI app
-app = FastAPI()
+# ✅ Fix Import Issue (Ensure API can find preprocessing pipeline)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Define paths
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.join(CURRENT_DIR, "../models")
-MODEL_PATH = os.path.join(MODEL_DIR, "random_forest_model.pkl")
+from preprocessing_pipeline import (
+    handle_missing_values, remove_outliers, compute_spectral_indices, 
+    scale_features, shap_feature_selection
+)
 
-# Load trained model
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"❌ Model file not found at {MODEL_PATH}")
-
+# ✅ Load Model with Correct Path
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "random_forest_model.pkl")
 model = joblib.load(MODEL_PATH)
 
-# Request Body Schema
-class InputData(BaseModel):
-    features: list  # Expecting a list of numerical feature values
+# ✅ Load Expected Feature Names from Saved File (Ensures Consistency)
+FEATURES_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "selected_features.txt")
+
+if not os.path.exists(FEATURES_PATH):
+    raise FileNotFoundError(f"❌ Feature names file not found: {FEATURES_PATH}")
+
+with open(FEATURES_PATH, "r") as f:
+    expected_features = [line.strip() for line in f.readlines()]
+
+# ✅ Define Input Schema
+class PredictionInput(BaseModel):
+    hsi_id: str
+    features: list[float]  # Must match the original dataset structure
+
+# ✅ Initialize FastAPI
+app = FastAPI()
 
 @app.post("/predict")
-async def predict(data: InputData):
+def predict(data: PredictionInput):
     try:
-        # Convert input to numpy array
-        input_array = np.array(data.features).reshape(1, -1)
+        # 🔹 Convert input data to DataFrame (Ensure feature names are strings)
+        df = pd.DataFrame([data.features], columns=[str(i) for i in range(len(data.features))])
 
-        # Make prediction
-        prediction = model.predict(input_array)[0]
+        # 🔹 Apply Full Preprocessing Pipeline
+        df = handle_missing_values(df)
+        df = remove_outliers(df, method="iqr")
+        df = compute_spectral_indices(df)
+        df = scale_features(df, method="standard")
+        df = shap_feature_selection(df, num_features=len(expected_features))  # Ensure consistency  
+
+        # 🔹 Ensure Correct Features Before Prediction
+        df = df.reindex(columns=expected_features, fill_value=0)  # Use the exact features from training
+
+        # 🔹 Validate Feature Count Before Prediction
+        if df.shape[1] != model.n_features_in_:
+            raise ValueError(f"Model expects {model.n_features_in_} features, but received {df.shape[1]}")
+
+        # 🔹 Make Prediction
+        prediction = model.predict(df)[0]
         return {"prediction": prediction}
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
-
-# Root endpoint
-@app.get("/")
-async def root():
-    return {"message": "FastAPI Model Prediction Service is Running!"}
